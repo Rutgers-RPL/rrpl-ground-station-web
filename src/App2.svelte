@@ -1,8 +1,7 @@
 <!--YURT TIME TO REWRITE EVERYTHING WITH A DIFFERENT API WHOOP-->
+
 <script>
 	import { SerialPort } from 'serialport'
-	import { autoDetect } from '@serialport/bindings-cpp'
-	import { list } from '@serialport/bindings-cpp'
 	import { onMount } from "svelte";
 	import LineChart from "./components/LineChart.svelte";
 	import getUsbId from "./lib/getUsbId";
@@ -10,6 +9,7 @@
 	import { decodeMinervaIIPacket } from "./lib/decode";
 	import { Line } from "svelte-chartjs";
 	import Gps from "./components/GPS.svelte";
+	import { binding_callbacks } from "svelte/internal";
 	// import Battery from './components/Battery.svelte'
 
 	let serialPort = null;
@@ -119,21 +119,82 @@
 
 	function initSerial() //did npm install serialport
 	{
-		
-		console.log("yurt")
-	//	const { autoDetect } = require('@serialport/bindings-cpp')
-		let moo=Binding.autoDetect()
-		console.log(moo)
+		const { autoDetect } = require('@serialport/bindings-cpp')
+		const Binding = autoDetect()
+		console.log(Binding.list())
+
+
+		/*navigator.serial.requestPort().then(async (port) => {
+			console.log("this is the type port yippee:")
+			console.log(typeof(port));
+			serialPort = port;
+			updateDataFromSerialStream();
+			window.sp = port;
+			// console.log(serialPort);
+			await port.open({ baudRate: parseInt($settings?.baudRate) || 115200 });
+			let buffer = [];
+			timeWhenConnected = Date.now();
+			numDataPointsWhileConnected = 0;
+			while (port.readable) {
+				const reader = port.readable.getReader();
+				try {
+					stopReadingPlz = false;
+					while (!stopReadingPlz) {
+						const { value, done } = await reader.read();
+						if (done) {
+							// console.log("Read done");
+							break;
+						}
+						// console.log(value);
+						let toAdd = buffer;
+						// let string = new TextDecoder("utf-8").decode(value.slice(0, 2));
+						// console.log(string, value.slice(0, 2));
+						for (let i = 0; i < value.length; i++) {
+							// console.log(toAdd.length, toAdd.slice(-1), toAdd.slice(-2));
+							if (
+								toAdd.length >= 107 &&
+								toAdd.slice(-1) == 0xbe &&
+								toAdd.slice(-2, -1) == 0xef
+							) {
+								toAdd.unshift(toAdd.pop());
+								toAdd.unshift(toAdd.pop());
+								serialDataStream.push(toAdd);
+								// console.log(toAdd);
+								toAdd = [];
+							}
+							toAdd.push(value[i]);
+						}
+						buffer = toAdd;
+					}
+				} catch (error) {
+					console.error(error);
+				} finally {
+					reader.releaseLock();
+					serialPort.close();
+					serialPort = null;
+					console.log("Reader released");
+				}
+			}
+		});
+		navigator.serial.addEventListener("connect", (event) => {
+			// console.log(event);
+		});
+		navigator.serial.addEventListener("disconnect", (event) => {
+			// console.log(event);
+			if (event.port === serialPort) {
+				serialPort = null;
+			}
+		});*/
         
 	}
 
 	function customPort()
 	{
 		let custport = prompt("Please enter a serial port:")
-		//const { SerialPort } = require('serialport')
-		const port = new SerialPort({path: custport, baudRate: $settings?.baudRate })
-		//const {autoDetect } = require('@serialport/bindings-cpp')	
-		port.write('im open yurt')
+		//const { SerialPort } = require('serialport') //issue with require()
+		const port1 = new SerialPort({path: custport, baudRate: $settings?.baudRate }) //illegal constructor?? :(
+	 	//const {autoDetect } = require('@serialport/bindings-cpp')	
+		
 	}
 
 	onMount(() => {
@@ -166,11 +227,12 @@
 					<small>Connected to</small> <br />
 					<span>{usbDeviceInfo.vendor}</span>
 					<br /> <strong>{usbDeviceInfo.product}</strong>
+					<script> const { SerialPort } = require('serialport') </script>
 				{:else}
 					Connected
 				{/if}
 			{:else}
-				YURT
+				Click for custom port! 
 			{/if}
 		</button>
 		{#if serialPort}
